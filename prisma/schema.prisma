@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  careerDNA        CareerDNA?
+  aiMemory         AIMemory[]
+  resumeVersions   ResumeVersion[]
+  interviewHistory InterviewHistory[]
+  opportunities    Opportunity[]
+  projects         Project[]
+  autopilotTasks   AutopilotTask[]
+}
+
+model CareerDNA {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  careerGoal     String
+  experienceLevel String
+  targetTimeline String?
+  
+  readinessScore Int      @default(0)
+  
+  skills         String?  // JSON stringified
+  strengths      String   // JSON stringified array
+  weaknesses     String   // JSON stringified array
+  growthAreas    String   // JSON stringified array
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model AIMemory {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  category    String   // "INTERVIEW_FEEDBACK", "SKILL_PROGRESS", "GENERAL_OBSERVATION"
+  content     String   // The actual memory/insight
+  importance  Int      @default(1) // 1-5 scale of how important this is for future personalization
+  
+  createdAt   DateTime @default(now())
+}
+
+model AutopilotTask {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  type        String   // "LEARN", "PRACTICE", "APPLY", "IMPROVE"
+  priority    String   // "HIGH", "MEDIUM", "LOW"
+  status      String   @default("TODO") // "TODO", "IN_PROGRESS", "DONE"
+  
+  estimatedMinutes Int?
+  expectedImpact   String?
+  
+  date        DateTime @default(now())
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ResumeVersion {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fileUrl     String
+  atsScore    Int?
+  feedback    String?  // JSON stringified
+  
+  version     Int      @default(1)
+  
+  createdAt   DateTime @default(now())
+}
+
+model InterviewHistory {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type            String   // "TECHNICAL", "HR", "SYSTEM_DESIGN"
+  interviewerRole String   // "TECH_LEAD", "HR", "FOUNDER"
+  
+  technicalScore  Int?
+  communicationScore Int?
+  overallScore    Int?
+  
+  feedback        String?
+  strengths       String?  // JSON stringified array
+  weaknesses      String?  // JSON stringified array
+  
+  createdAt       DateTime @default(now())
+}
+
+model Opportunity {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String
+  company         String
+  type            String   // "JOB", "INTERNSHIP", "HACKATHON"
+  url             String?
+  
+  matchScore      Int?
+  status          String   @default("DISCOVERED")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Project {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?
+  githubUrl       String?
+  
+  githubScore     Int?
+  improvements    String?  // JSON stringified
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
